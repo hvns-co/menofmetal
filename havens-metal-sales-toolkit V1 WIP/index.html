@@ -1,0 +1,535 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Havens Metal Sales Toolkit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@latest/dist/jspdf.plugin.autotable.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.12.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+
+    <!-- Main App Container -->
+    <div id="app-container">
+
+        <!-- ======================= -->
+        <!-- == DASHBOARD VIEW  == -->
+        <!-- ======================= -->
+        <div id="dashboard-view">
+            <header class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">Sales Toolkit</h1>
+                <p class="text-gray-600 mt-3 text-lg">Your central hub for sales and quoting tools.</p>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Quote Builder Card -->
+                <div id="open-quote-builder-btn" class="tool-card">
+                    <div class="tool-card-icon bg-indigo-100 text-indigo-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20V16"></path></svg>
+                    </div>
+                    <h2 class="tool-card-title">Quote Builder</h2>
+                    <p class="tool-card-description">Manually build quotes or use the AI Assistant to process bulk leads.</p>
+                </div>
+                <!-- Email Helper Card -->
+                <div id="open-email-helper-btn" class="tool-card">
+                     <div class="tool-card-icon bg-green-100 text-green-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </div>
+                    <h2 class="tool-card-title">Email Helper</h2>
+                    <p class="tool-card-description">Create, manage, and quickly use pre-made email templates.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================== -->
+        <!-- == QUOTE BUILDER VIEW == -->
+        <!-- ======================== -->
+        <div id="quote-builder-view" class="hidden">
+             <header class="text-center mb-8">
+                <div class="flex justify-between items-center">
+                    <button id="qb-back-to-dashboard" class="back-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Dashboard
+                    </button>
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Havens Metal Quote Builder</h1>
+                    <div class="w-28"></div> <!-- Spacer -->
+                </div>
+                <p class="text-gray-600 mt-2">Build a custom quote item by item, or use the AI Assistant for bulk leads.</p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+                <!-- Left Side: Inputs -->
+                <div id="left-panel" class="lg:col-span-1">
+                    <!-- Tab Selector -->
+                    <div class="flex gap-4 mb-6">
+                        <button id="tab-sink" class="tab-btn active">Sink</button>
+                        <button id="tab-irregular" class="tab-btn">Irregular Sink</button>
+                        <button id="tab-backsplash" class="tab-btn">Backsplash</button>
+                        <button id="tab-ai-parser" class="tab-btn">AI Assistant</button>
+                    </div>
+
+                    <!-- Sink Calculator -->
+                    <div id="sink-calculator-container">
+                        <div class="calculator-section">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Sink Dimensions</h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div><label for="sinkLength" class="form-label">Length (in)</label><input type="number" id="sinkLength" class="form-input" value="30" step="0.5"></div>
+                                <div><label for="sinkWidth" class="form-label">Width (in)</label><input type="number" id="sinkWidth" class="form-input" value="19.5" step="0.5"></div>
+                                <div><label for="sinkHeight" class="form-label">Height (in)</label><input type="number" id="sinkHeight" class="form-input" value="8" step="0.5"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-3">Standard is 30"L x 19.5"W x 8"H. Tiered pricing applies for height.</p>
+                        </div>
+                        <div class="calculator-section">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Sink Material & Finish</h2>
+                            <label for="material" class="form-label">Material</label><select id="material" class="form-select mb-4"><option value="stainless">Stainless Steel</option><option value="copper" id="copper-option">Copper</option><option value="brass" id="brass-option">Brass</option></select>
+                            <label for="finish" class="form-label">Finish</label><select id="finish" class="form-select"></select>
+                        </div>
+                    </div>
+                    
+                    <!-- Irregular Sink Calculator -->
+                    <div id="irregular-sink-calculator-container" class="hidden">
+                        <div class="calculator-section">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Irregular Sink Details</h2>
+                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div><label for="isinkLength" class="form-label">Length (in)</label><input type="number" id="isinkLength" class="form-input" value="30" step="0.5"></div>
+                                <div><label for="isinkWidth" class="form-label">Width (in)</label><input type="number" id="isinkWidth" class="form-input" value="19.5" step="0.5"></div>
+                                <div><label for="isinkHeight" class="form-label">Height (in)</label><input type="number" id="isinkHeight" class="form-input" value="8" step="0.5"></div>
+                            </div>
+                            <div class="mt-4">
+                                <label for="complexity" class="form-label">Complexity Level</label>
+                                <select id="complexity" class="form-select">
+                                    <option value="level_1">Level 1 (Standard Corner)</option>
+                                    <option value="level_2">Level 2 (Linear Walls w/ Offset)</option>
+                                    <option value="level_3">Level 3 (Non-Linear Walls)</option>
+                                </select>
+                            </div>
+                            <div id="corner-calc-button-container" class="mt-4">
+                                <button id="open-corner-calc-btn" class="w-full bg-indigo-100 text-indigo-700 py-2 rounded-lg font-semibold hover:bg-indigo-200 transition-colors">Open Corner Calculator</button>
+                            </div>
+                        </div>
+                         <div class="calculator-section">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Material & Finish</h2>
+                            <label for="imaterial" class="form-label">Material</label><select id="imaterial" class="form-select mb-4"><option value="stainless">Stainless Steel</option><option value="copper" id="icopper-option">Copper</option><option value="brass" id="ibrass-option">Brass</option></select>
+                            <label for="ifinish" class="form-label">Finish</label><select id="ifinish" class="form-select"></select>
+                        </div>
+                    </div>
+
+                    <!-- Backsplash Calculator -->
+                    <div id="backsplash-calculator-container" class="hidden">
+                        <div class="calculator-section">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Backsplash Details</h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div><label for="backsplashLength" class="form-label">Length (in)</label><input type="number" id="backsplashLength" class="form-input" value="0" step="0.125"></div>
+                                <div><label for="backsplashWidth" class="form-label">Width (in)</label><input type="number" id="backsplashWidth" class="form-input" value="0" step="0.125"></div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <label for="backsplashMaterial" class="form-label">Material</label>
+                                    <select id="backsplashMaterial" class="form-select">
+                                        <option value="luxe">Luxe (Base: $100)</option>
+                                        <option value="textured">Textured (Base: $350)</option>
+                                        <option value="luxe_hammered">Luxe Hammered (+25%)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="backsplashEdgeProfile" class="form-label">Edge Profile (in)</label>
+                                    <input type="number" id="backsplashEdgeProfile" class="form-input" value="0" step="0.125" min="0" max="5">
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-3">Max single piece size is 120" x 48" (including edge profile). Larger pieces will be split.</p>
+                        </div>
+                    </div>
+
+                    <!-- AI Assistant -->
+                    <div id="ai-parser-container" class="hidden relative">
+                        <!-- Loader Overlay -->
+                        <div id="ai-loader-overlay" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-20">
+                            <div class="loader"></div>
+                            <p class="mt-4 text-lg font-semibold text-gray-700">Analyzing your leads...</p>
+                            <p class="text-sm text-gray-500">The AI assistant is at work, please wait.</p>
+                        </div>
+                        <div class="calculator-section">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">AI Assistant</h2>
+                            <p class="text-gray-600 mb-4">Paste raw lead data from your CRM below. The AI assistant will analyze the data, identify leads ready for quoting, and flag those needing more information.</p>
+                            <textarea id="crm-data-input" class="form-input" rows="10" placeholder="e.g., John Doe, wants a 33x22x10 copper sink with a hammered finish and one ledge..."></textarea>
+                            <button id="analyze-leads-btn" class="w-full mt-4 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">Analyze Leads</button>
+                        </div>
+                        <div id="ai-results-container" class="mt-6 hidden"></div>
+                        <div id="ai-action-container" class="hidden mt-6"></div>
+                    </div>
+                    
+                    <!-- Item Breakdown -->
+                    <div id="item-breakdown-section" class="summary-section">
+                         <h2 id="item-breakdown-title" class="text-xl font-bold text-gray-800 mb-4 border-b pb-3">Current Item Breakdown</h2>
+                         <div id="item-breakdown-details"></div>
+                         <button id="add-item-to-quote-btn" class="w-full mt-6 bg-yellow-700 text-white py-3 rounded-lg font-semibold hover:bg-yellow-800 transition-colors">Add to Quote</button>
+                    </div>
+                </div>
+
+                <!-- Right Side: Summary -->
+                <div id="right-panel" class="lg:col-span-1 lg:sticky top-8 h-min">
+                    <!-- Sink Add-Ons -->
+                    <div id="sink-addons-container">
+                        <div class="calculator-section">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Sink Add-Ons</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div><label for="bowlConfig" class="form-label">Bowl Configuration</label><select id="bowlConfig" class="form-select"><option value="0">Single Bowl</option><option value="0.3879">Double Bowl (+38.8%)</option><option value="0.7758">Triple Bowl (+77.6%)</option></select></div>
+                                <div><label for="aprons" class="form-label">Aprons</label><select id="aprons" class="form-select"><option value="0">0 Aprons</option><option value="0.3879">1 Apron (+38.8%)</option><option value="0.6465">2 Aprons (+64.7%)</option></select></div>
+                                <div><label for="ledges" class="form-label">Ledges</label><select id="ledges" class="form-select"><option value="0">0 Ledges</option><option value="0.1293">1 Ledge (+12.9%)</option><option value="0.2586">2 Ledges (+25.9%)</option></select></div>
+                                <div><label for="drainboards" class="form-label">Drainboards</label><select id="drainboards" class="form-select"><option value="0">0 Drainboards</option><option value="0.3879">1 Drainboard (+38.8%)</option><option value="0.7758">2 Drainboards (+77.6%)</option></select></div>
+                            </div>
+                            <div class="space-y-3 pt-4 border-t">
+                                <label class="checkbox-label"><input type="checkbox" id="faucetDeck"><span class="option-text" id="faucetDeck-label">Integrated Faucet Deck</span></label>
+                                <label class="checkbox-label"><input type="checkbox" id="edgeProfile"><span class="option-text" id="edgeProfile-label">Raised Edge Profile</span></label>
+                                <label class="checkbox-label" id="radiusCorner-label-parent"><input type="checkbox" id="radiusCorner"><span class="option-text" id="radiusCorner-label">Radius Corner</span></label>
+                                <label class="checkbox-label"><input type="checkbox" id="faucetHole"><span class="option-text" id="faucetHole-label">Addtl. Faucet Hole</span></label>
+                                <label class="checkbox-label"><input type="checkbox" id="drainHole"><span class="option-text" id="drainHole-label">Addtl. Drain Hole</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Information for PDF -->
+                    <div class="summary-section">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-3">Customer & Quote Information</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="pdf-quote-number" class="form-label">Quote #</label>
+                                <input type="text" id="pdf-quote-number" class="form-input" placeholder="e.g., 304160">
+                            </div>
+                             <div>
+                                <label for="pdf-customer-name" class="form-label">Client Name</label>
+                                <input type="text" id="pdf-customer-name" class="form-input" placeholder="e.g., Randy Cobian">
+                            </div>
+                            <div>
+                                <label for="pdf-bill-to" class="form-label">Client Address</label>
+                                <textarea id="pdf-bill-to" class="form-input" rows="3" placeholder="12528 Grandezza Cir Estero&#10;FL 33928"></textarea>
+                            </div>
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="pdf-customer-phone" class="form-label">Client Phone</label>
+                                    <input type="text" id="pdf-customer-phone" class="form-input" placeholder="e.g., +19144140753">
+                                </div>
+                                <div>
+                                    <label for="pdf-customer-email" class="form-label">Client Email</label>
+                                    <input type="email" id="pdf-customer-email" class="form-input" placeholder="e.g., cobian.randy@gmail.com">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="pdf-amount-paid" class="form-label">Amount Paid</label>
+                                <input type="number" id="pdf-amount-paid" class="form-input" placeholder="e.g., 1275.00" step="0.01">
+                            </div>
+                            <div>
+                                <label for="pdf-notes" class="form-label">Invoice Notes</label>
+                                <textarea id="pdf-notes" class="form-input" rows="3" placeholder="Deposit - $1275&#10;One Cutting Board - Black Poly...&#10;Deposit: 25%"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Master Quote -->
+                    <div class="summary-section">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">Master Quote</h2>
+                        <div id="quote-items-list">
+                            <p class="text-gray-500 text-center py-4">No items added to the quote yet.</p>
+                        </div>
+                        <div id="master-total-section" class="hidden">
+                            <div class="summary-line font-bold"><span>Subtotal</span><span id="master-subtotal"></span></div>
+                            <div class="calculator-section p-4 mt-4">
+                                <label for="shipping" class="form-label !mb-2">Shipping Destination</label>
+                                <select id="shipping" class="form-select mb-2"><option value="standard">USA - Standard (4.5%)</option><option value="custom">USA - Custom/Freight (7.5%)</option><option value="canada">Canada (9%)</option><option value="local">Local Pickup (No Charge)</option></select>
+                                <label class="checkbox-label !p-2"><input type="checkbox" id="tax"><span class="option-text">Apply Florida Sales Tax</span></label>
+                            </div>
+                            <div class="summary-line"><span>Shipping</span><span id="master-shipping"></span></div>
+                            <div class="summary-line"><span>Sales Tax</span><span id="master-tax"></span></div>
+                            <div class="summary-line mt-4 pt-4 border-t-2 border-gray-300"><span class="summary-total">Grand Total</span><span id="master-grand-total" class="summary-total"></span></div>
+                        </div>
+                        <div class="flex gap-4 mt-6">
+                            <button id="start-new-quote-btn" class="w-full bg-gray-700 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors hidden">Start New Quote</button>
+                            <button id="export-pdf-btn" class="w-full bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-green-800 transition-colors hidden">Export as PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================== -->
+        <!-- == EMAIL HELPER VIEW == -->
+        <!-- ====================== -->
+        <div id="email-helper-view" class="hidden">
+            <header class="text-center mb-8">
+                 <div class="flex justify-between items-center">
+                    <button id="eh-back-to-dashboard" class="back-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Dashboard
+                    </button>
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">Email Helper</h1>
+                    <div class="w-28"></div> <!-- Spacer -->
+                </div>
+                <p class="text-gray-600 mt-2">Create and manage reusable email templates.</p>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Left Panel: Template List -->
+                <div class="md:col-span-1">
+                    <div class="calculator-section">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">Templates</h2>
+                        <div class="flex gap-2 mb-4">
+                            <select id="template-select" class="form-select">
+                                <option value="">Select a template...</option>
+                            </select>
+                        </div>
+                        <button id="new-template-btn" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700">New Template</button>
+                    </div>
+                </div>
+                <!-- Right Panel: Editor -->
+                <div class="md:col-span-2">
+                    <div class="calculator-section">
+                         <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-gray-700">Editor</h2>
+                            <div class="flex gap-2 items-center flex-wrap">
+                                <!-- Action buttons will be toggled here -->
+                                <button id="edit-template-btn" class="bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-700 hidden">Edit Template</button>
+                                <button id="save-template-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 hidden">Save</button>
+                                <button id="delete-template-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 hidden">Delete</button>
+                                <button id="cancel-edit-btn" class="font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 hidden">Cancel</button>
+                                <button id="copy-email-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Copy Email</button>
+                            </div>
+                        </div>
+                        <div class="editor-toolbar">
+                            <button class="toolbar-btn" data-command="bold"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path></svg></button>
+                            <button class="toolbar-btn" data-command="italic"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"></line><line x1="14" y1="20" x2="5" y2="20"></line><line x1="15" y1="4" x2="9" y2="20"></line></svg></button>
+                            <button class="toolbar-btn" data-command="underline"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path><line x1="4" y1="21" x2="20" y2="21"></line></svg></button>
+                            <button class="toolbar-btn" data-command="insertUnorderedList"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
+                        </div>
+                        <div id="email-editor" class="form-input" contenteditable="false" style="min-height: 300px;"></div>
+                        
+                        <!-- ATTACHMENT SECTION -->
+                        <div id="attachment-container" class="mt-4 hidden">
+                            <label class="form-label text-sm font-semibold">Attachment</label>
+                            <div id="attachment-display" class="hidden items-center justify-between p-2 pl-3 bg-gray-100 rounded-md border">
+                                <span id="attachment-name" class="text-sm font-medium text-gray-800 truncate pr-2"></span>
+                                <button id="remove-attachment-btn" class="flex-shrink-0 text-red-500 hover:text-red-700 text-xl font-bold leading-none px-2 rounded-full hover:bg-red-100">&times;</button>
+                            </div>
+                            <div id="attachment-input-container">
+                                <input type="file" id="attachment-input" class="form-input text-sm p-2 h-auto">
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-gray-500 mt-2">Use <strong>{{customerName}}</strong>, <strong>{{quoteNumber}}</strong>, <strong>{{balanceDue}}</strong>, and <strong>{{customerAddress}}</strong> for dynamic fields.</p>
+                        <p id="email-copy-confirmation" class="text-sm text-green-600 font-medium h-5 mt-2 opacity-0"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pricing Guide Button -->
+    <button id="guide-btn" class="guide-btn hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+    </button>
+
+    <!-- MODALS -->
+
+    <!-- Save Template Modal -->
+    <div id="save-template-modal" class="modal-overlay">
+        <div class="modal-content w-full max-w-md">
+            <h2 id="save-modal-title" class="text-2xl font-bold text-gray-800 mb-4">Save Template</h2>
+            <p class="text-gray-600 mb-6">Enter a name for your email template.</p>
+            <div>
+                <label for="modal-template-name" class="form-label">Template Name</label>
+                <input type="text" id="modal-template-name" class="form-input" placeholder="e.g., Initial Follow-Up">
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button id="cancel-save-template-btn" class="font-semibold text-gray-600 hover:text-gray-900 px-4 py-2">Cancel</button>
+                <button id="confirm-save-template-btn" class="bg-indigo-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-indigo-700">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Variables Modal -->
+    <div id="template-vars-modal" class="modal-overlay">
+         <div class="modal-content w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Complete Your Template</h2>
+            <p class="text-gray-600 mb-6">This template uses dynamic fields. Please provide the following information.</p>
+            <div class="space-y-4">
+                <div id="customer-name-field" class="hidden">
+                    <label for="modal-customer-name" class="form-label">Customer Name</label>
+                    <input type="text" id="modal-customer-name" class="form-input">
+                </div>
+                <div id="quote-number-field" class="hidden">
+                    <label for="modal-quote-number" class="form-label">Quote Number</label>
+                    <input type="text" id="modal-quote-number" class="form-input">
+                </div>
+                <div id="balance-due-field" class="hidden">
+                    <label for="modal-balance-due" class="form-label">Balance Due</label>
+                    <input type="text" id="modal-balance-due" class="form-input">
+                </div>
+                <div id="customer-address-field" class="hidden">
+                    <label for="modal-customer-address" class="form-label">Customer Address</label>
+                    <textarea id="modal-customer-address" class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                 <button id="cancel-vars-btn" class="font-semibold text-gray-600 hover:text-gray-900 px-4 py-2">Cancel</button>
+                <button id="apply-vars-btn" class="bg-indigo-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-indigo-700">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Results Summary Modal -->
+    <div id="ai-results-modal" class="modal-overlay">
+        <div class="modal-content w-full max-w-lg text-left">
+            <button id="ai-modal-x-close-btn" class="modal-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Analysis Complete!</h2>
+            <div id="ai-results-modal-content" class="text-gray-700 space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-4"></div>
+            <div class="mt-6">
+                <div class="flex items-center gap-4">
+                    <button id="modal-generate-quotes-btn" class="flex-grow bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">Generate Ready Quotes</button>
+                    <button id="copy-follow-ups-btn" class="hidden flex-shrink-0 p-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors" title="Copy follow-up leads for logging">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <p id="copy-confirmation" class="text-sm text-green-600 font-medium text-center mt-2 h-5 opacity-0"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Export Modal -->
+    <div id="ai-export-modal" class="modal-overlay">
+        <div class="modal-content w-full max-w-3xl">
+            <button id="ai-export-modal-close-btn" class="modal-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Generated Quotes</h2>
+            <p class="text-gray-600 mb-6">Review the quotes generated by the AI. You can apply global shipping and tax settings before exporting.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 border rounded-lg bg-gray-50">
+                <div>
+                    <label for="ai-shipping" class="form-label !mb-2">Shipping Destination</label>
+                    <select id="ai-shipping" class="form-select">
+                        <option value="standard">USA - Standard (4.5%)</option>
+                        <option value="custom">USA - Custom/Freight (7.5%)</option>
+                        <option value="canada">Canada (9%)</option>
+                        <option value="local">Local Pickup (No Charge)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label !mb-2 opacity-0">Tax</label>
+                    <label class="checkbox-label !p-2 mt-2">
+                        <input type="checkbox" id="ai-tax">
+                        <span class="option-text">Apply Florida Sales Tax</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="ai-generated-quotes-list" class="space-y-3 max-h-[40vh] overflow-y-auto pr-2 border-t border-b py-4">
+                <!-- Quotes will be dynamically inserted here -->
+            </div>
+
+            <div class="mt-8 flex justify-between items-center gap-4">
+                <button id="ai-export-all-zip-btn" class="bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-gray-400">
+                    Export All as ZIP
+                </button>
+                <p id="zip-loader" class="text-gray-600 font-medium hidden flex items-center">
+                    <span class="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900 mr-2"></span>
+                    Zipping files...
+                </p>
+                <button id="done-ai-export-btn" class="font-semibold text-gray-600 hover:text-gray-900 px-4 py-2">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="modal-overlay">
+        <div class="modal-content w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Confirm Deletion</h2>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete the template "<span id="delete-template-name" class="font-semibold text-gray-800"></span>"? This action cannot be undone.</p>
+            <div class="mt-8 flex justify-end gap-4">
+                <button id="cancel-delete-btn" class="px-4 py-2 rounded-lg font-semibold text-gray-600 hover:bg-gray-100">Cancel</button>
+                <button id="confirm-delete-btn" class="bg-red-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-red-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Passcode Modal -->
+    <div id="passcode-modal" class="modal-overlay">
+        <div class="modal-content w-full max-w-sm">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Enter Passcode</h2>
+            <p class="text-gray-600 mb-6">Please enter the passcode to edit templates.</p>
+            <div>
+                <label for="passcode-input" class="form-label sr-only">Passcode</label>
+                <input type="password" id="passcode-input" class="form-input" placeholder="••••••••">
+                <p id="passcode-error" class="text-red-600 text-sm mt-2 hidden">Invalid passcode. Please try again.</p>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button id="cancel-passcode-btn" class="px-4 py-2 rounded-lg font-semibold text-gray-600 hover:bg-gray-100">Cancel</button>
+                <button id="confirm-passcode-btn" class="bg-indigo-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-indigo-700">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Guide Modal -->
+    <div id="guide-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="modal-close-btn" class="modal-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">General Pricing Reference Guide</h2>
+            <div class="space-y-6 text-gray-700 max-h-[70vh] overflow-y-auto pr-4">
+                <div><h3 class="font-semibold text-lg mb-2 border-b pb-1">Base Price & Dimensions</h3><p><strong>Base Sink (30"x19.5"x8" Luxe Stainless):</strong> $1,450.00</p><p><strong>Base Irregular Sink (30"x19.5"x8"):</strong> $2,450.00</p><p><strong>Length/Width Increase:</strong> +$50 per inch over standard</p><p><strong>Height Increase (8" - 12"):</strong> +$100 per inch over 8"</p><p><strong>Height Increase (>12"):</strong> +$150 per inch over 12"</p></div>
+                <div><h3 class="font-semibold text-lg mb-2 border-b pb-1">Material Upgrades</h3><p><strong>Copper:</strong> +25.9% of Stainless Base Price</p><p><strong>Brass:</strong> +51.7% of Stainless Base Price</p></div>
+                <div><h3 class="font-semibold text-lg mb-2 border-b pb-1">Finish Upgrades</h3><p class="font-medium text-gray-800 mt-2">For Stainless Steel & Brass Sinks:</p><ul class="list-disc list-inside ml-2"><li><strong>Prestige / Royal Oak / etc:</strong> +12.9% of Material Subtotal</li><li><strong>Luxe-Hammered:</strong> +25.9% of Material Subtotal</li></ul><p class="font-medium text-gray-800 mt-3">For Copper Sinks:</p><ul class="list-disc list-inside ml-2"><li><strong>Natural / Micro-Hammered Raw:</strong> +10.3% of Material Subtotal</li><li><strong>Hand-Hammered / Patina:</strong> +20.6% of Material Subtotal</li></ul></div>
+                <div><h3 class="font-semibold text-lg mb-2 border-b pb-1">Sink Add-Ons</h3><p><strong>Double-Bowl:</strong> +38.8% of Sink Subtotal</p><p><strong>Triple-Bowl:</strong> +77.6% of Sink Subtotal</p><p><strong>1 Apron:</strong> +38.8% of Sink Subtotal</p><p><strong>2 Aprons:</strong> +64.7% of Sink Subtotal</p><p><strong>1 Ledge:</strong> +12.9% of Sink Subtotal</p><p><strong>2 Ledges:</strong> +25.9% of Sink Subtotal</p><p><strong>1 Drainboard:</strong> +38.8% of Sink Subtotal</p><p><strong>2 Drainboards:</strong> +77.6% of Sink Subtotal</p><p><strong>Integrated Faucet Deck:</strong> +12.9% of Sink Subtotal</p><p><strong>Radius Corner:</strong> +25.9% of Sink Subtotal</p><p><strong>Raised Edge Profile:</strong> +10.3% of Sink Subtotal</p><p><strong>Addtl. Faucet Hole:</strong> +2.6% of Sink Subtotal</p><p><strong>Addtl. Drain Hole:</strong> +22.7% of Sink Subtotal</p></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Corner Calculator Modal -->
+    <div id="corner-calc-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="corner-modal-close-btn" class="modal-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Corner Sink Calculator</h2>
+            <p class="text-sm text-gray-600 mb-6">Enter any two values to calculate the third.</p>
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                <div class="flex-shrink-0">
+                     <svg width="100%" viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
+                        <polygon points="50,40 350,40 350,150 170,150 170,320 50,320" class="fill-slate-200 stroke-slate-400" stroke-width="2" />
+                        <defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" class="fill-slate-500" /></marker></defs>
+                        <line x1="50" y1="25" x2="350" y2="25" class="stroke-slate-500" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)" /><text x="200" y="20" font-size="14" class="fill-slate-600 font-medium" text-anchor="middle" dy="-5">B</text>
+                        <line x1="35" y1="40" x2="35" y2="320" class="stroke-slate-500" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)" /><text x="30" y="180" font-size="14" class="fill-slate-600 font-medium" text-anchor="end" transform="rotate(-90 30 180)" dy="-5">A</text>
+                        <line x1="365" y1="40" x2="365" y2="150" class="stroke-slate-500" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)" /><text x="370" y="95" font-size="14" class="fill-slate-600 font-medium" text-anchor="middle" transform="rotate(90 370 95)" dy="-5">Width</text>
+                        <line x1="50" y1="320" x2="350" y2="40" class="stroke-slate-500" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)" /><text x="200" y="180" font-size="14" class="fill-slate-600 font-medium" text-anchor="middle" transform="rotate(-43 200 180)" dy="-8">Length</text>
+                    </svg>
+                </div>
+                <div class="w-full">
+                    <div class="space-y-4">
+                        <div><label for="modalWallA" class="form-label">Wall A (Overall Width)</label><input type="number" id="modalWallA" class="form-input" step="0.125"></div>
+                        <div><label for="modalWallB" class="form-label">Wall B (Overall Length)</label><input type="number" id="modalWallB" class="form-input" step="0.125"></div>
+                        <div><label for="modalArmWidth" class="form-label"> Width (C)</label><input type="number" id="modalArmWidth" class="form-input" step="0.125"></div>
+                        <div><label for="modalHypotenuseC" class="form-label">Length (D)</label><input type="number" id="modalHypotenuseC" class="form-input" step="0.125"></div>
+                    </div>
+                    <p id="modal-hypotenuse-error" class="text-red-600 text-sm mt-2 hidden">Error: The length (D) must be longer than either wall.</p>
+                    <button id="apply-dimensions-btn" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Apply Dimensions</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
